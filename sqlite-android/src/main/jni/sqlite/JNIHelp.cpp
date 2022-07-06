@@ -24,8 +24,6 @@
 #include <string.h>
 #include <assert.h>
 
-#include <string>
-
 /**
  * Equivalent to ScopedLocalRef, but for C_JNIEnv instead. (And slightly more powerful.)
  */
@@ -94,7 +92,7 @@ extern "C" int jniRegisterNativeMethods(C_JNIEnv* env, const char* className,
  * be populated with the "binary" class name and, if present, the
  * exception message.
  */
-static bool getExceptionSummary(C_JNIEnv* env, jthrowable exception, std::string& result) {
+static bool getExceptionSummary(C_JNIEnv* env, jthrowable exception, const char* result) {
     JNIEnv* e = reinterpret_cast<JNIEnv*>(env);
 
     /* get the name of the exception's class */
@@ -116,7 +114,7 @@ static bool getExceptionSummary(C_JNIEnv* env, jthrowable exception, std::string
         result = "<error getting class name UTF-8>";
         return false;
     }
-    result += classNameChars;
+    //result += classNameChars;
     (*env)->ReleaseStringUTFChars(e, classNameStr.get(), classNameChars);
 
     /* if the exception has a detail message, get that */
@@ -128,14 +126,14 @@ static bool getExceptionSummary(C_JNIEnv* env, jthrowable exception, std::string
         return true;
     }
 
-    result += ": ";
+    //result += ": ";
 
     const char* messageChars = (*env)->GetStringUTFChars(e, messageStr.get(), NULL);
     if (messageChars != NULL) {
-        result += messageChars;
+        //result += messageChars;
         (*env)->ReleaseStringUTFChars(e, messageStr.get(), messageChars);
     } else {
-        result += "<error getting message>";
+        //result += "<error getting message>";
         (*env)->ExceptionClear(e); // clear OOM
     }
 
@@ -145,7 +143,7 @@ static bool getExceptionSummary(C_JNIEnv* env, jthrowable exception, std::string
 /*
  * Returns an exception (with stack trace) as a string.
  */
-static bool getStackTrace(C_JNIEnv* env, jthrowable exception, std::string& result) {
+static bool getStackTrace(C_JNIEnv* env, jthrowable exception, const char *result) {
     JNIEnv* e = reinterpret_cast<JNIEnv*>(env);
 
     scoped_local_ref<jclass> stringWriterClass(env, findClass(env, "java/io/StringWriter"));
@@ -212,9 +210,9 @@ extern "C" int jniThrowException(C_JNIEnv* env, const char* className, const cha
         (*env)->ExceptionClear(e);
 
         if (exception.get() != NULL) {
-            std::string text;
+            char *text;
             getExceptionSummary(env, exception.get(), text);
-            ALOGW("Discarding pending exception (%s) to throw %s", text.c_str(), className);
+            ALOGW("Discarding pending exception (%s) to throw %s", text, className);
         }
     }
 
@@ -254,7 +252,7 @@ int jniThrowIOException(C_JNIEnv* env, int errnum) {
     return jniThrowException(env, "java/io/IOException", message);
 }
 
-static std::string jniGetStackTrace(C_JNIEnv* env, jthrowable exception) {
+static const char* jniGetStackTrace(C_JNIEnv* env, jthrowable exception) {
     JNIEnv* e = reinterpret_cast<JNIEnv*>(env);
 
     scoped_local_ref<jthrowable> currentException(env, (*env)->ExceptionOccurred(e));
@@ -269,7 +267,7 @@ static std::string jniGetStackTrace(C_JNIEnv* env, jthrowable exception) {
         (*env)->ExceptionClear(e);
     }
 
-    std::string trace;
+    const char *trace;
     if (!getStackTrace(env, exception, trace)) {
         (*env)->ExceptionClear(e);
         getExceptionSummary(env, exception, trace);
@@ -283,8 +281,8 @@ static std::string jniGetStackTrace(C_JNIEnv* env, jthrowable exception) {
 }
 
 void jniLogException(C_JNIEnv* env, int priority, const char* tag, jthrowable exception) {
-    std::string trace(jniGetStackTrace(env, exception));
-    __android_log_write(priority, tag, trace.c_str());
+    const char* trace = jniGetStackTrace(env, exception);
+    __android_log_write(priority, tag, trace);
 }
 
 const char* jniStrError(int errnum, char* buf, size_t buflen) {
@@ -303,3 +301,8 @@ const char* jniStrError(int errnum, char* buf, size_t buflen) {
     return buf;
 #endif
 }
+
+void* operator new (size_t size)        { return malloc(size); }
+void* operator new [] (size_t size)     { return malloc(size); }
+void operator delete (void* pointer)    { free(pointer); }
+void operator delete [] (void* pointer) { free(pointer); }

@@ -21,7 +21,7 @@ android {
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         consumerProguardFiles 'proguard-rules.pro'
         ndk {
-            abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+            abiFilters 'armeabi-v7a', 'arm64-v8a'
         }
     }
     buildTypes {
@@ -58,7 +58,7 @@ dependencies {
 }
 
 ext {
-    sqliteDistributionUrl = 'https://www.sqlite.org/2022/sqlite-amalgamation-3380500.zip'
+    sqliteDistributionUrl = 'http://192.168.1.100/media/sqlite-amalgamation-3380500.zip'
     pomXml = {
         resolveStrategy = DELEGATE_FIRST
         name project.name

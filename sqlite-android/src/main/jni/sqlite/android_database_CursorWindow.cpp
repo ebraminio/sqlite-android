@@ -23,7 +23,8 @@
 #include <jni.h>
 #include <JNIHelp.h>
 #include <stdio.h>
-#include <string>
+#include <stdlib.h>
+#include <unistd.h>
 #include <unistd.h>
 
 #include "CursorWindow.h"
@@ -52,11 +53,11 @@ static void throwUnknownTypeException(JNIEnv * env, jint type) {
 
 static jlong nativeCreate(JNIEnv* env, jclass clazz, jstring nameObj, jint cursorWindowSize) {
     const char* nameStr = env->GetStringUTFChars(nameObj, NULL);
-    std::string name(nameStr);
-    env->ReleaseStringUTFChars(nameObj, nameStr);
+    //std::string name(nameStr);
+    //env->ReleaseStringUTFChars(nameObj, nameStr);
 
     CursorWindow* window;
-    status_t status = CursorWindow::create(name, cursorWindowSize, &window);
+    status_t status = CursorWindow::create(nameStr, cursorWindowSize, &window);
     if (status || !window) {
         ALOGE("Could not allocate CursorWindow of size %d due to error %d.",
         cursorWindowSize, status);
@@ -77,7 +78,7 @@ static void nativeDispose(JNIEnv* env, jclass clazz, jlong windowPtr) {
 
 static jstring nativeGetName(JNIEnv* env, jclass clazz, jlong windowPtr) {
     CursorWindow* window = reinterpret_cast<CursorWindow*>(windowPtr);
-    return env->NewStringUTF(window->name().c_str());
+    return env->NewStringUTF(window->name());
 }
 
 static void nativeClear(JNIEnv * env, jclass clazz, jlong windowPtr) {
